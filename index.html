@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+
+  <title>Chatbot</title>
+
+</head>
+
+<body>
+
+  <div class="flex flex-col h-screen">
+
+    <div class="flex-1 overflow-y-auto p-4 md:p-6" id="chatContent">
+
+      <!-- Chat messages will be appended here -->
+
+    </div>
+
+    <div class="bg-gray-100 py-4 px-6 flex items-center w-full">
+
+      <textarea id="chatInput" class="bg-white border border-gray-300 rounded-lg py-2 px-4 w-full outline-none mt-2 md:mt-0" placeholder="Type your message..." style="resize: none;">&lt;/textarea&gt;
+
+      <button id="sendButton" class="bg-blue-500 text-white rounded-lg py-2 px-4 ml-4">Send</button>
+
+    </div>
+
+    <script>
+
+      var chatInput = document.getElementById("chatInput");
+
+      var chatContent = document.getElementById("chatContent");
+
+      // Load chat history from local storage
+
+      var chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+      // Render chat history
+
+      chatHistory.forEach(function(message) {
+
+        if (message.sender === "user") {
+
+          renderUserMessage(message.text);
+
+        } else {
+
+          renderBotMessage(message.text);
+
+        }
+
+      });
+
+      chatInput.addEventListener("keydown", function(event) {
+
+        if (event.key === "Enter" &amp;&amp; !event.shiftKey) {
+
+          event.preventDefault();
+
+          sendMessage();
+
+        }
+
+      });
+
+      document.getElementById("sendButton").addEventListener("click", function() {
+
+        sendMessage();
+
+      });
+
+      function sendMessage() {
+
+        var text = chatInput.value;
+
+        var url = `https://api.fasttube.ir/?text=${encodeURIComponent(text)}&amp;key=RayaxKey`;
+
+        // Render user message in chat history
+
+        renderUserMessage(text);
+
+        try {
+
+          fetch(url)
+
+            .then(res => res.json())
+
+            .then(data => {
+
+              // Render bot message in chat history
+
+              renderBotMessage(data.message);
+
+              // Save chat message to local storage
+
+              chatHistory.push({ sender: "user", text });
+
+              chatHistory.push({ sender: "bot", text: data.message });
+
+              localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+
+              // Clear input field
+
+              chatInput.value = "";
+
+              // Scroll to bottom of chat history
+
+              chatContent.scrollTop = chatContent.scrollHeight;
+
+            })
+
+            .catch(err => console.error("Error fetching chatbot response:", err));
+
+        } catch (err) {
+
+          console.error("Error sending message:", err);
+
+        }
+
+      }
+
+      chatContent.addEventListener("click", function(event) {
+
+        if (event.target.classList.contains("copyButton")) {
+
+          var text = event.target.getAttribute("data-text");
+
+          var tempInput = document.createElement("input");
+
+          tempInput.type = "text";
+
+          tempInput.value = text;
+
+          document.body.appendChild(tempInput);
+
+          tempInput.select();
+
+          document.execCommand("copy");
+
+          alert("متن کپی شد");
+
+          document.body.removeChild(tempInput);
+
+        }
+
+      });
+
+      function renderUserMessage(text) {
+
+        var userMessage = document.createElement("div");
+
+        userMessage.className = "flex items-end mb-4";
+
+        userMessage.innerHTML = `
+
+    <div class="flex justify-end items-center w-full">
+
+      <div class="bg-blue-500 rounded-lg px-4 py-2 max-w-xs">
+
+        <p class="text-sm text-white">${text}</p>
+
+      </div>
+
+      <img class="w-10 h-10 rounded-full ml-3" src="https://rozup.ir/view/3732003/149452.png" alt="User Avatar">
+
+    </div>
+
+  `;
+
+        chatContent.appendChild(userMessage);
+
+      }
+
+      function renderBotMessage(text) {
+
+        var botMessage = document.createElement("div");
+
+        botMessage.className = "flex items-start mb-4";
+
+        botMessage.innerHTML = `
+
+    <img class="w-10 h-10 rounded-full mr-3" src="https://rozup.ir/view/3732002/chatgpt-logo-02AFA704B5-seeklogo.com.png" alt="Bot Avatar">
+
+    <div class="bg-gray-200 text-gray-600 rounded-lg px-4 py-2 max-w-xs">
+
+      <p class="text-sm">${text.replace(/\n/g, "<br>")}</p>
+
+      <button class="bg-blue-500 text-white rounded-lg py-1 px-2 mt-2 copyButton" data-text="${text}">Copy</button>
+
+    </div>
+
+  `;
+
+        chatContent.appendChild(botMessage);
+
+      }
+
+    </script>
+
+  </div>
+
+</body>
+
+</html>
+
